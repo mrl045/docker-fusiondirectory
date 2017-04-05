@@ -32,13 +32,15 @@ RUN rm -f /etc/apt/sources.list.d/* \
     fusiondirectory-smarty3-acl-render=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-webservice-shell=${FUSIONDIRECTORY_VERSION} \
     php-mdb2 \
-    php5-fpm \
-    python \
-    python-dev \
-    py2-p
- && rm -rf /var/lib/apt/lists/* \
- && pip install -U pip && \
-    pip install -U certbot
+    php5-fpm
+
+RUN apt-get -t jessie-backports install -y \
+    certbot \
+    python-acme \
+    python-certbot \
+    python-certbot-nginx \
+    gcc \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN export TARGET=/etc/php5/fpm/php.ini \
  && sed -i -e "s:^;\(opcache.enable\) *=.*$:\1=1:" ${TARGET} \
@@ -58,10 +60,11 @@ RUN export TARGET=/etc/php5/fpm/pool.d/www.conf \
 ADD letsencrypt-setup /usr/bin/letsencrypt-setup
 ADD letsencrypt-renew /usr/bin/letsencrypt-renew
 COPY entrypoint.sh /sbin/entrypoint.sh
-RUN chmod 755 /sbin/entrypoint.sh && \
+RUN mkdir -p /var/www/html && \
+    mkdir -p /usr/bin/ && \
+    chmod 755 /sbin/entrypoint.sh && \
     chmod 755 /usr/bin/letsencrypt-setup && \
-    chmod 755 /usr/bin/letsencrypt-renew && \
-    mkdir /var/www/html/
+    chmod 755 /usr/bin/letsencrypt-renew
 COPY cmd.sh /sbin/cmd.sh
 RUN chmod 755 /sbin/cmd.sh
 COPY default /etc/nginx/sites-available/
