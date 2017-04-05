@@ -1,0 +1,19 @@
+#!/bin/bash
+#Lets Encrypt
+if [ -z "$DOMAIN" ]; then
+	echo "You need the \$DOMAIN variable";
+else
+# lets move those certificates from mounted share
+	echo "Renewing certificate"
+	rm -rf /etc/letsencypt && \
+		cp -r /var/www/html/certs/letsencrypt /etc/ && \
+		certbot renew && \
+		echo "Copy to persistent storage..." && \
+		cp -r /etc/letsencrypt/ /var/www/html/certs && \
+		echo "Replacing old certificates with new..." && \
+		cp /var/www/html/certs/letsencrypt/live/${DOMAIN}/fullchain.pem /var/www/html/certs/cert.pem && \
+		cp /var/www/html/certs/letsencrypt/live/${DOMAIN}/privkey.pem /var/www/html/certs/key.pem && \
+		sed -i "s@root /var/www/html;@root ${WEBROOT};@g" /etc/nginx/sites-available/default.conf && \
+		echo "Instructing webserver to serve requests with new certificate..." && \
+		service restart nginx
+fi
