@@ -1,7 +1,8 @@
 FROM hrektts/nginx:latest
 MAINTAINER mps299792458@gmail.com
+MAINTAINER danny@io-a.nl
 
-ENV FUSIONDIRECTORY_VERSION=1.0.16-1
+ENV FUSIONDIRECTORY_VERSION=1.0.20-1
 
 RUN rm -f /etc/apt/sources.list.d/* \
  && apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys E184859262B4981F \
@@ -14,21 +15,30 @@ RUN rm -f /etc/apt/sources.list.d/* \
     fusiondirectory-plugin-argonaut=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-autofs=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-certificates=${FUSIONDIRECTORY_VERSION} \
+    fusiondirectory-plugin-dsa=${FUSIONDIRECTORY_VERSION} \
+    fusiondirectory-plugin-dns=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-gpg=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-ldapdump=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-ldapmanager=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-mail=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-postfix=${FUSIONDIRECTORY_VERSION} \
+    fusiondirectory-plugin-samba=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-ssh=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-sudo=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-systems=${FUSIONDIRECTORY_VERSION} \
+    fusiondirectory-plugin-squid=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-weblink=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-plugin-webservice=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-smarty3-acl-render=${FUSIONDIRECTORY_VERSION} \
     fusiondirectory-webservice-shell=${FUSIONDIRECTORY_VERSION} \
     php-mdb2 \
     php5-fpm \
- && rm -rf /var/lib/apt/lists/*
+    python \
+    python-dev \
+    py2-p
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install -U pip && \
+    pip install -U certbot
 
 RUN export TARGET=/etc/php5/fpm/php.ini \
  && sed -i -e "s:^;\(opcache.enable\) *=.*$:\1=1:" ${TARGET} \
@@ -45,8 +55,13 @@ RUN export TARGET=/etc/php5/fpm/pool.d/www.conf \
  && sed -i -e "s:^\(listen *= *\).*$:\1/run/php5-fpm.sock:" ${TARGET} \
  && unset TARGET
 
+ADD letsencrypt-setup /usr/bin/letsencrypt-setup
+ADD letsencrypt-renew /usr/bin/letsencrypt-renew
 COPY entrypoint.sh /sbin/entrypoint.sh
-RUN chmod 755 /sbin/entrypoint.sh
+RUN chmod 755 /sbin/entrypoint.sh && \
+    chmod 755 /usr/bin/letsencrypt-setup && \
+    chmod 755 /usr/bin/letsencrypt-renew && \
+    mkdir /var/www/html/
 COPY cmd.sh /sbin/cmd.sh
 RUN chmod 755 /sbin/cmd.sh
 COPY default /etc/nginx/sites-available/
