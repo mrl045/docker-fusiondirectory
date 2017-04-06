@@ -64,7 +64,9 @@ RUN mkdir -p /var/www/html && \
     mkdir -p /usr/bin/ && \
     chmod 755 /sbin/entrypoint.sh && \
     chmod 755 /usr/bin/letsencrypt-setup && \
-    chmod 755 /usr/bin/letsencrypt-renew
+    chmod 755 /usr/bin/letsencrypt-renew && \
+    chmod 755 /var/www/html && \
+    chown www-data:www-data -R /var/www/html
 COPY cmd.sh /sbin/cmd.sh
 RUN chmod 755 /sbin/cmd.sh
 COPY default /etc/nginx/sites-available/

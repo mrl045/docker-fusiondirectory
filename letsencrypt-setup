@@ -4,16 +4,13 @@ if [ -z "$DOMAIN" ]; then
 	echo "You need the \$DOMAIN variable";
 else
 # lets move those certificates from mounted share
-	echo "Renewing certificate"
+	echo "Requesting certificate"
 	rm -rf /etc/letsencypt && \
-		cp -r /var/www/html/certs/letsencrypt /etc/ && \
-		certbot renew && \
-		echo "Copy to persistent storage..." && \
+	certbot certonly --webroot -w /usr/share/fusiondirectory/html -d $DOMAIN --email $GIT_EMAIL --agree-tos --quiet && \
+		mkdir -p /var/www/html/certs && \
 		cp -r /etc/letsencrypt/ /var/www/html/certs && \
-		echo "Replacing old certificates with new..." && \
 		cp /var/www/html/certs/letsencrypt/live/${DOMAIN}/fullchain.pem /var/www/html/certs/cert.pem && \
 		cp /var/www/html/certs/letsencrypt/live/${DOMAIN}/privkey.pem /var/www/html/certs/key.pem && \
-		sed -i "s@root /var/www/html;@root ${WEBROOT};@g" /etc/nginx/sites-available/default.conf && \
-		echo "Instructing webserver to serve requests with new certificate..." && \
-		service restart nginx
+		sed -i "s@#@@g" /etc/nginx/sites-available/default && \
+		service nginx reload
 fi
